@@ -1,0 +1,33 @@
+#------------------------------------------------------------------------------------------------------
+# Variables para los grupos de seguridad
+SG_Frontend:
+  ec2_security_group_name: sg_frontend
+  ec2_security_group_description: Grupo de seguridad para frontales sin balanceador de carga
+
+SG_Backend:
+  ec2_security_group_name: sg_backend
+  ec2_security_group_description: Grupo de seguridad para backend
+
+Ingress_permissions:
+  ec2_security_group_ssh: 22
+  ec2_security_group_http: 80
+  ec2_security_group_https: 443
+  ec2_security_group_mysql: 3306
+  ec2_security_group_cidr: 0.0.0.0/0
+  ec2_security_group_protocol: tcp
+
+
+#------------------------------------------------------------------------------------------------------
+# Variables para las instancias EC2
+
+Instance_frontend:
+  ec2_instance_name: iaw-practica-07-frontend
+
+Instance_backend:
+  ec2_instance_name: iaw-practica-07-backend
+
+Instance_stats:
+  ec2_instance_ami: ami-00874d747dde814fa
+  ec2_instance_ram_4gb: t2.medium
+  ec2_instance_ram_8gb: t2.large
+  ec2_key_file: vockey

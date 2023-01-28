@@ -1,0 +1,52 @@
+---
+- name: Playbook para borrar la infraestructura de la práctica 07
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+    - name: Inclusión del archivo de variables
+      ansible.builtin.include_vars: vars/variables.yaml
+
+    - name: Obtención del ID de la instancia frontend mediante el nombre
+      amazon.aws.ec2_instance_info:
+        filters:
+          "tag:Name": "{{ Instance_frontend.ec2_instance_name }}"
+          "instance-state-name": "running"
+
+      register: ec2_instance_frontend_name
+
+    - name: Obtención del ID de la instancia backend mediante el nombre
+      amazon.aws.ec2_instance_info:
+        filters:
+          "tag:Name": "{{ Instance_backend.ec2_instance_name }}"
+          "instance-state-name": "running"
+
+      register: ec2_instance_backend_name
+
+    - name: Desasociación de la IP elástica de la instancia frontend y liberación de la misma
+      community.aws.ec2_eip:
+        device_id: "{{ ec2_instance_frontend_name.instances[0].instance_id }}"
+        state: absent
+
+    - name: Eliminación de la instancia frontend
+      amazon.aws.ec2_instance:
+        filters:
+          "tag:Name": "{{ Instance_frontend.ec2_instance_name }}"
+        state: absent
+
+    - name: Eliminación de la instancia backend
+      amazon.aws.ec2_instance:
+        filters:
+          "tag:Name": "{{ Instance_backend.ec2_instance_name }}"
+        state: absent
+
+    - name: Eliminación del grupo de seguridad del frontend
+      amazon.aws.ec2_security_group:
+        name: "{{ SG_Frontend.ec2_security_group_name }}"
+        state: absent
+
+    - name: Eliminación del grupo de seguridad del backend
+      amazon.aws.ec2_security_group:
+        name: "{{ SG_Backend.ec2_security_group_name }}"
+        state: absent
