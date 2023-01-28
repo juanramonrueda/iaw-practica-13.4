@@ -1,0 +1,39 @@
+---
+- name: Playbook para instalar la pila LAMP
+  hosts: aws
+  become: true
+
+  tasks:
+
+    - name: Actualizar los repositorios
+      ansible.builtin.apt:
+        update_cache: true
+
+    - name: Instalar el servidor web Apache
+      ansible.builtin.apt:
+        name: apache2
+        state: present
+
+    - name: Instalar el sistema gestor de bases de datos MySQL
+      ansible.builtin.apt:
+        name: mysql-server
+        state: present
+
+    - name: Instalar PHP y los módulos necesarios
+      ansible.builtin.apt:
+        name:
+          - php
+          - php-mysql
+          - libapache2-mod-php
+        state: present
+
+    - name: Reiniciar el servidor web Apache
+      ansible.builtin.service:
+        name: apache2
+        state: restarted
+
+    - name: Copiar el archivo phpinfo.php
+      ansible.builtin.copy:
+        src: php/phpinfo.php
+        dest: /var/www/html/
+        mode: 0755
