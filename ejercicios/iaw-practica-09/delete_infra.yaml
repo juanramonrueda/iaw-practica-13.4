@@ -1,0 +1,105 @@
+---
+- name: Playbook para borrar la infraestructura de la práctica 09
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+    - name: Inclusión del archivo de variables
+      ansible.builtin.include_vars: vars/variables.yaml
+
+    - name: Obtención del ID de la instancia balancer mediante el nombre
+      amazon.aws.ec2_instance_info:
+        filters:
+          "tag:Name": "{{ Instance_balancer.ec2_instance_name }}"
+          "instance-state-name": "running"
+
+      register: ec2_instance_balancer_name
+
+    - name: Obtención del ID de la instancia frontend 01 mediante el nombre
+      amazon.aws.ec2_instance_info:
+        filters:
+          "tag:Name": "{{ Instance_frontend_01.ec2_instance_name }}"
+          "instance-state-name": "running"
+
+      register: ec2_instance_frontend_01_name
+
+    - name: Obtención del ID de la instancia frontend 02 mediante el nombre
+      amazon.aws.ec2_instance_info:
+        filters:
+          "tag:Name": "{{ Instance_frontend_02.ec2_instance_name }}"
+          "instance-state-name": "running"
+
+      register: ec2_instance_frontend_02_name
+
+    - name: Obtención del ID de la instancia backend mediante el nombre
+      amazon.aws.ec2_instance_info:
+        filters:
+          "tag:Name": "{{ Instance_backend.ec2_instance_name }}"
+          "instance-state-name": "running"
+
+      register: ec2_instance_backend_name
+
+
+    - name: Obtención del ID de la instancia NFS mediante el nombre
+      amazon.aws.ec2_instance_info:
+        filters:
+          "tag:Name": "{{ Instance_nfs.ec2_instance_name }}"
+          "instance-state-name": "running"
+
+      register: ec2_instance_nfs_name
+
+    - name: Desasociación de la IP elástica de la instancia balancer y liberación de la misma
+      community.aws.ec2_eip:
+        device_id: "{{ ec2_instance_balancer_name.instances[0].instance_id }}"
+        state: absent
+
+    - name: Eliminación de la instancia balancer
+      amazon.aws.ec2_instance:
+        filters:
+          "tag:Name": "{{ Instance_balancer.ec2_instance_name }}"
+        state: absent
+
+    - name: Eliminación de la instancia frontend 01
+      amazon.aws.ec2_instance:
+        filters:
+          "tag:Name": "{{ Instance_frontend_01.ec2_instance_name }}"
+        state: absent
+
+    - name: Eliminación de la instancia frontend 02
+      amazon.aws.ec2_instance:
+        filters:
+          "tag:Name": "{{ Instance_frontend_02.ec2_instance_name }}"
+        state: absent
+
+    - name: Eliminación de la instancia backend
+      amazon.aws.ec2_instance:
+        filters:
+          "tag:Name": "{{ Instance_backend.ec2_instance_name }}"
+        state: absent
+
+    - name: Eliminación de la instancia NFS
+      amazon.aws.ec2_instance:
+        filters:
+          "tag:Name": "{{ Instance_nfs.ec2_instance_name }}"
+        state: absent
+
+    - name: Eliminación del grupo de seguridad del load balancer
+      amazon.aws.ec2_security_group:
+        name: "{{ SG_Balancer.ec2_security_group_name }}"
+        state: absent
+
+    - name: Eliminación del grupo de seguridad del frontend
+      amazon.aws.ec2_security_group:
+        name: "{{ SG_Frontend.ec2_security_group_name }}"
+        state: absent
+
+    - name: Eliminación del grupo de seguridad del backend
+      amazon.aws.ec2_security_group:
+        name: "{{ SG_Backend.ec2_security_group_name }}"
+        state: absent
+
+    - name: Eliminación del grupo de seguridad del NFS Server
+      amazon.aws.ec2_security_group:
+        name: "{{ SG_Nfs.ec2_security_group_name }}"
+        state: absent

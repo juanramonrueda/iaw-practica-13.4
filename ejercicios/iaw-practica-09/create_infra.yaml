@@ -1,0 +1,147 @@
+---
+- name: Playbook para crear la infraestructura de la práctica 09, un balanceador, dos frontales, un backend y un NFS Server
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+    - name: Inclusión del archivo de variables
+      ansible.builtin.include_vars: vars/variables.yaml
+
+    - name: Creación del grupo de seguridad para el balanceador de carga
+      amazon.aws.ec2_security_group:
+        name: "{{ SG_Balancer.ec2_security_group_name }}"
+        description: "{{ SG_Balancer.ec2_security_group_description }}"
+        rules:
+          - proto: "{{ Ingress_permissions.ec2_security_group_protocol }}"
+            from_port: "{{ Ingress_permissions.ec2_security_group_ssh }}"
+            to_port: "{{ Ingress_permissions.ec2_security_group_ssh }}"
+            cidr_ip: "{{ Ingress_permissions.ec2_security_group_cidr }}"
+
+          - proto: "{{ Ingress_permissions.ec2_security_group_protocol }}"
+            from_port: "{{ Ingress_permissions.ec2_security_group_http }}"
+            to_port: "{{ Ingress_permissions.ec2_security_group_http }}"
+            cidr_ip: "{{ Ingress_permissions.ec2_security_group_cidr }}"
+
+          - proto: "{{ Ingress_permissions.ec2_security_group_protocol }}"
+            from_port: "{{ Ingress_permissions.ec2_security_group_https }}"
+            to_port: "{{ Ingress_permissions.ec2_security_group_https }}"
+            cidr_ip: "{{ Ingress_permissions.ec2_security_group_cidr }}"
+
+      register: security_group_balancer
+
+    - name: Creación del grupo de seguridad para los frontend
+      amazon.aws.ec2_security_group:
+        name: "{{ SG_Frontend.ec2_security_group_name }}"
+        description: "{{ SG_Frontend.ec2_security_group_description }}"
+        rules:
+          - proto: "{{ Ingress_permissions.ec2_security_group_protocol }}"
+            from_port: "{{ Ingress_permissions.ec2_security_group_ssh }}"
+            to_port: "{{ Ingress_permissions.ec2_security_group_ssh }}"
+            cidr_ip: "{{ Ingress_permissions.ec2_security_group_cidr }}"
+
+          - proto: "{{ Ingress_permissions.ec2_security_group_protocol }}"
+            from_port: "{{ Ingress_permissions.ec2_security_group_http }}"
+            to_port: "{{ Ingress_permissions.ec2_security_group_http }}"
+            cidr_ip: "{{ Ingress_permissions.ec2_security_group_cidr }}"
+
+      register: security_group_frontend
+
+    - name: Creación del grupo de seguridad para el backend
+      amazon.aws.ec2_security_group:
+        name: "{{ SG_Backend.ec2_security_group_name }}"
+        description: "{{ SG_Backend.ec2_security_group_description }}"
+        rules:
+          - proto: "{{ Ingress_permissions.ec2_security_group_protocol }}"
+            from_port: "{{ Ingress_permissions.ec2_security_group_ssh }}"
+            to_port: "{{ Ingress_permissions.ec2_security_group_ssh }}"
+            cidr_ip: "{{ Ingress_permissions.ec2_security_group_cidr }}"
+
+          - proto: "{{ Ingress_permissions.ec2_security_group_protocol }}"
+            from_port: "{{ Ingress_permissions.ec2_security_group_mysql }}"
+            to_port: "{{ Ingress_permissions.ec2_security_group_mysql }}"
+            cidr_ip: "{{ Ingress_permissions.ec2_security_group_cidr }}"
+
+      register: security_group_backend
+
+    - name: Creación del grupo de seguridad para el NFS Server
+      amazon.aws.ec2_security_group:
+        name: "{{ SG_Nfs.ec2_security_group_name }}"
+        description: "{{ SG_Nfs.ec2_security_group_description }}"
+        rules:
+          - proto: "{{ Ingress_permissions.ec2_security_group_protocol }}"
+            from_port: "{{ Ingress_permissions.ec2_security_group_ssh }}"
+            to_port: "{{ Ingress_permissions.ec2_security_group_ssh }}"
+            cidr_ip: "{{ Ingress_permissions.ec2_security_group_cidr }}"
+
+          - proto: "{{ Ingress_permissions.ec2_security_group_protocol }}"
+            from_port: "{{ Ingress_permissions.ecs_security_group_nfs }}"
+            to_port: "{{ Ingress_permissions.ecs_security_group_nfs }}"
+            cidr_ip: "{{ Ingress_permissions.ec2_security_group_cidr }}"
+
+      register: security_group_nfs
+
+    - name: Creación de la instancia balancer
+      amazon.aws.ec2_instance:
+        name: "{{ Instance_balancer.ec2_instance_name }}"
+        security_group: "{{ SG_Balancer.ec2_security_group_name }}"
+        key_name: "{{ Instance_stats.ec2_key_file }}"
+        instance_type: "{{ Instance_stats.ec2_instance_ram_4gb }}"
+        image_id: "{{ Instance_stats.ec2_instance_ami }}"
+        state: running
+
+      register: ec2_balancer
+
+    - name: Creación de la instancia frontend-01
+      amazon.aws.ec2_instance:
+        name: "{{ Instance_frontend_01.ec2_instance_name }}"
+        security_group: "{{ SG_Frontend.ec2_security_group_name }}"
+        key_name: "{{ Instance_stats.ec2_key_file }}"
+        instance_type: "{{ Instance_stats.ec2_instance_ram_4gb }}"
+        image_id: "{{ Instance_stats.ec2_instance_ami }}"
+        state: running
+
+      register: ec2_frontend_01
+
+    - name: Creación de la instancia frontend-02
+      amazon.aws.ec2_instance:
+        name: "{{ Instance_frontend_02.ec2_instance_name }}"
+        security_group: "{{ SG_Frontend.ec2_security_group_name }}"
+        key_name: "{{ Instance_stats.ec2_key_file }}"
+        instance_type: "{{ Instance_stats.ec2_instance_ram_4gb }}"
+        image_id: "{{ Instance_stats.ec2_instance_ami }}"
+        state: running
+
+      register: ec2_frontend_02
+
+    - name: Creación de la instancia backend
+      amazon.aws.ec2_instance:
+        name: "{{ Instance_backend.ec2_instance_name }}"
+        security_group: "{{ SG_Backend.ec2_security_group_name }}"
+        key_name: "{{ Instance_stats.ec2_key_file }}"
+        instance_type: "{{ Instance_stats.ec2_instance_ram_8gb }}"
+        image_id: "{{ Instance_stats.ec2_instance_ami }}"
+        state: running
+
+      register: ec2_backend
+
+    - name: Creación de la instancia NFS Server
+      amazon.aws.ec2_instance:
+        name: "{{ Instance_nfs.ec2_instance_name }}"
+        security_group: "{{ SG_Nfs.ec2_security_group_name }}"
+        key_name: "{{ Instance_stats.ec2_key_file }}"
+        instance_type: "{{ Instance_stats.ec2_instance_ram_4gb }}"
+        image_id: "{{ Instance_stats.ec2_instance_ami }}"
+        state: running
+
+      register: ec2_nfs
+
+    - name: Asociación de una IP elástica a la cuenta y asignación a la instancia frontend
+      community.aws.ec2_eip:
+        device_id: "{{ ec2_balancer.instances[0].instance_id }}"
+
+      register: eip_balancer
+
+    - name: Mostrado de la IP elástica asignada a la instancia frontend
+      ansible.builtin.debug:
+        msg: "La IP elástica asociada a la instancia es {{ eip_balancer.public_ip }}"
