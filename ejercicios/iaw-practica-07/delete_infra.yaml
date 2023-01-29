@@ -16,14 +16,6 @@
 
       register: ec2_instance_frontend_name
 
-    - name: Obtención del ID de la instancia backend mediante el nombre
-      amazon.aws.ec2_instance_info:
-        filters:
-          "tag:Name": "{{ Instance_backend.ec2_instance_name }}"
-          "instance-state-name": "running"
-
-      register: ec2_instance_backend_name
-
     - name: Desasociación de la IP elástica de la instancia frontend y liberación de la misma
       community.aws.ec2_eip:
         device_id: "{{ ec2_instance_frontend_name.instances[0].instance_id }}"
