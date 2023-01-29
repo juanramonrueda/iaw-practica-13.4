@@ -19,6 +19,7 @@
     - name: Desasociación de la IP elástica de la instancia frontend y liberación de la misma
       community.aws.ec2_eip:
         device_id: "{{ ec2_instance_frontend_name.instances[0].instance_id }}"
+        release_on_disassociation: true
         state: absent
 
     - name: Eliminación de la instancia frontend
