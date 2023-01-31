@@ -77,7 +77,7 @@ Empezaremos estableciendo el inicio del playbook para especificar el nombre que 
 
 Continuaremos con las tareas que debemos realizar, primero, incluiremos el archivo de variables para evitar tenerlas en el playbook ya que varias de las variables las usaremos en los dos playbooks que tenemos en este directorio.
 
-Después, crearemos el grupo de seguridad para el frontend, como no tendrá balanceador de carga, tenemos que abrir los puertos 22 (SSH), 80 (HTTP) y 443 (HTTPS), usaremos el módulo **amazon.aws.ec2_security_group** para crear el grupo de seguridad, después especificaremos el nombre que tendrá usando la variable que hemos definido en el archivo de variables y la descripción de la misma. Continuaremos con **rules para especificar el protocolo que usarán, los puertos que vamos a abrir y desde qué IPs aceptarán conexiones**, realizaremos este proceso para los tres puertos que necesitamos. Usaremos **register** para registrar en una variable los datos que hemos usado para el grupo de seguridad del frontend. De la misma manera crearemos el grupo de seguridad para el backend, cambiando las variables, abriendo únicamente los puertos 22 (SSH) y 3306 (MySQL / Aurora) y cambiando la variable para register.
+Después, crearemos el grupo de seguridad para el frontend, como no tendrá balanceador de carga, tenemos que abrir los puertos 22 (SSH), 80 (HTTP) y 443 (HTTPS), usaremos el módulo **amazon.aws.ec2_security_group** para crear el grupo de seguridad, después especificaremos el nombre que tendrá usando la variable que hemos definido en el archivo de variables y la descripción de la misma. Continuaremos con **rules para especificar el protocolo que usarán, los puertos que vamos a abrir y desde qué IPs aceptarán conexiones**, realizaremos este proceso para los tres puertos que necesitamos. De la misma manera crearemos el grupo de seguridad para el backend, cambiando las variables, abriendo únicamente los puertos 22 (SSH) y 3306 (MySQL / Aurora).
 
 ```yaml
   tasks:
@@ -103,8 +103,6 @@ Después, crearemos el grupo de seguridad para el frontend, como no tendrá bala
             from_port: "{{ Ingress_permissions.ec2_security_group_https }}"
             to_port: "{{ Ingress_permissions.ec2_security_group_https }}"
             cidr_ip: "{{ Ingress_permissions.ec2_security_group_cidr }}"
-
-      register: security_group_frontend
 ```
 
 Después de crear los grupos de seguridad, procederemos con la creación de las instancias, usaremos el módulo **amazon.aws.ec2_instance** y especificaremos el nombre que tendrá la instancia, el grupo de seguridad, el archivo de claves que se usará para la conexión SSH con la instancia, la cantidad de memoria RAM que tendrá, la AMI que usará para indicar el sistema operativo y que el estado sea running, también registraremos los datos de la instancia. De la misma manera crearemos la instancia backend, cambiando las variables para dicha instancia.
@@ -309,8 +307,6 @@ Primero procederemos con la creación de los grupos de seguridad en este caso te
             from_port: "{{ Ingress_permissions.ec2_security_group_https }}"
             to_port: "{{ Ingress_permissions.ec2_security_group_https }}"
             cidr_ip: "{{ Ingress_permissions.ec2_security_group_cidr }}"
-
-      register: security_group_balancer
 ```
 
 Después de los grupos de seguridad, crearemos las cinco instancias con el state a "running" y registrando sus datos.
