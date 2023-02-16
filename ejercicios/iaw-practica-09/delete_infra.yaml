@@ -22,52 +22,24 @@
         release_on_disassociation: true
         state: absent
 
-    - name: Eliminación de la instancia balancer
+    - name: Eliminación de las instancias mediante loop
       amazon.aws.ec2_instance:
         filters:
-          "tag:Name": "{{ Instance_balancer.ec2_instance_name }}"
+          "tag:Name": "{{ item }}"
         state: absent
+      loop:
+        - "{{ Instance_balancer.ec2_instance_name }}"
+        - "{{ Instance_frontend_01.ec2_instance_name }}"
+        - "{{ Instance_frontend_02.ec2_instance_name }}"
+        - "{{ Instance_backend.ec2_instance_name }}"
+        - "{{ Instance_nfs.ec2_instance_name }}"
 
-    - name: Eliminación de la instancia frontend 01
-      amazon.aws.ec2_instance:
-        filters:
-          "tag:Name": "{{ Instance_frontend_01.ec2_instance_name }}"
-        state: absent
-
-    - name: Eliminación de la instancia frontend 02
-      amazon.aws.ec2_instance:
-        filters:
-          "tag:Name": "{{ Instance_frontend_02.ec2_instance_name }}"
-        state: absent
-
-    - name: Eliminación de la instancia backend
-      amazon.aws.ec2_instance:
-        filters:
-          "tag:Name": "{{ Instance_backend.ec2_instance_name }}"
-        state: absent
-
-    - name: Eliminación de la instancia NFS
-      amazon.aws.ec2_instance:
-        filters:
-          "tag:Name": "{{ Instance_nfs.ec2_instance_name }}"
-        state: absent
-
-    - name: Eliminación del grupo de seguridad del load balancer
+    - name: Eliminación de los grupos de seguridad mediante loop
       amazon.aws.ec2_security_group:
-        name: "{{ SG_Balancer.ec2_security_group_name }}"
+        name: "{{ item }}"
         state: absent
-
-    - name: Eliminación del grupo de seguridad del frontend
-      amazon.aws.ec2_security_group:
-        name: "{{ SG_Frontend.ec2_security_group_name }}"
-        state: absent
-
-    - name: Eliminación del grupo de seguridad del backend
-      amazon.aws.ec2_security_group:
-        name: "{{ SG_Backend.ec2_security_group_name }}"
-        state: absent
-
-    - name: Eliminación del grupo de seguridad del NFS Server
-      amazon.aws.ec2_security_group:
-        name: "{{ SG_Nfs.ec2_security_group_name }}"
-        state: absent
+      loop:
+        - "{{ SG_Balancer.ec2_security_group_name }}"
+        - "{{ SG_Frontend.ec2_security_group_name }}"
+        - "{{ SG_Backend.ec2_security_group_name }}"
+        - "{{ SG_Nfs.ec2_security_group_name }}"
